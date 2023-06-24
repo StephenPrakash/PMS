@@ -7,7 +7,7 @@ The parameters measured will be displayed on both serial monitor and 16*2 LCD sc
 1. Circuit Diagram
 2. Code
 
-You will need to install a new library for this to work
+You will need to install a new library for this to work - \n
 MAX30100_PulseOximeter.h
 
 Others are in-built.
