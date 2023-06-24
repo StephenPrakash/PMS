@@ -1,0 +1,76 @@
+#include <Wire.h>
+#include "MAX30100_PulseOximeter.h"
+ #include <LiquidCrystal.h>
+#define LM35 A0 
+#define Red 6
+#define Green 7 
+#define Buzzer 8
+#define REPORTING_PERIOD_MS     1000
+PulseOximeter pox;
+uint32_t tsLastReport = 0;
+const int RS = 11, EN = 12, D4 = 2, D5 = 3, D6 = 4, D7 = 5;
+LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+void onBeatDetected()
+{
+    Serial.println("Beat!");
+}
+void setup()
+{
+  lcd.begin(16, 2); // set up number of columns and rows
+    Serial.begin(115200);
+    Serial.print("Initializing pulse oximeter.."); 
+     if (!pox.begin()) {
+        Serial.println("FAILED");
+        for(;;);
+    } 
+    else {
+        Serial.println("SUCCESS");
+    }
+  pinMode (Red, OUTPUT); 
+  pinMode (Green, OUTPUT);
+  pinMode (Buzzer, OUTPUT);
+  pox.setOnBeatDetectedCallback(onBeatDetected);
+  lcd.setCursor(0, 0);
+  lcd.print("BPM:"); 
+  lcd.setCursor(0,1);
+  lcd.print("Temp:");   
+}
+void loop()
+{
+    pox.update();
+    float lmVal = analogRead(LM35);
+    float tempr = (lmVal*500)/1023; 
+    if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
+        Serial.print("Heart rate:");        
+        int heartrate = pox.getHeartRate();
+        Serial.print(heartrate);
+        lcd.setCursor(4,0);
+        lcd.print(heartrate); 
+        Serial.print("bpm/ SpO2:");
+        lcd.setCursor(6,0);
+        lcd.print(" SpO2:");
+        int spo2 = pox.getSpO2();
+        Serial.print(spo2);
+        Serial.println("%");
+        lcd.setCursor(12,0);
+        lcd.print(spo2);
+        lcd.setCursor(14,0);
+        lcd.print(" %");
+        Serial.println(tempr);
+        lcd.setCursor(5,1);
+        lcd.print(tempr);
+        lcd.setCursor(11,1);
+        lcd.print("C");
+        tsLastReport = millis();
+  if(tempr>50||heartrate>90||heartrate<30||spo2<50){
+    digitalWrite(Red,HIGH);
+    digitalWrite(Green,LOW);
+    digitalWrite(Buzzer,HIGH);    
+  }
+  else{
+    digitalWrite(Red,LOW);
+    digitalWrite(Green,HIGH);
+    digitalWrite(Buzzer,LOW);
+  }
+}
+}
